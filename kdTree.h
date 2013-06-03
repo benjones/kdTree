@@ -43,6 +43,7 @@ template <typename PointType, typename PointArray=std::vector<PointType> >
  
  void deletePoint(size_t nodeIndex);
  PointType getPoint(size_t nodeIndex){return points[nodeIndex];}
+ void insertPoint(const PointType& p);
 
 
  //END PUBLIC API 
@@ -88,6 +89,12 @@ template <typename PointType, typename PointArray=std::vector<PointType> >
  template<int SplitDimension, typename F>
  void inorderTraversalSubtree(F func,
 			      std::unique_ptr<KDNode<PointType, SplitDimension> >& node);
+
+
+ template<int SplitDimension>
+ std::unique_ptr<KDNode<PointType, SplitDimension> >
+ insertPointSubtree(std::unique_ptr<KDNode<PointType, SplitDimension> >& node,
+		    size_t pointIndex);
 
 };
 
@@ -330,5 +337,34 @@ template<typename PointType, typename PointArray>
   
 }
 
+template<typename PointType, typename PointArray>
+  void KDTree<PointType, PointArray>::insertPoint(const PointType& point){
+  points.push_back(point);
+  root = insertPointSubtree<0>(root, points.size() -1);
+}
 
+template<typename PointType, typename PointArray>
+  template<int SplitDimension>
+  std::unique_ptr<KDNode<PointType, SplitDimension> >
+  KDTree<PointType, PointArray>::insertPointSubtree(std::unique_ptr<KDNode<PointType, SplitDimension> >& node,
+						    size_t pointIndex){
+  
+  auto constexpr nextDimension = (SplitDimension +1)%PointType::dimension;
+
+  if(node == nullptr){
+    std::cout << "new node" << std::endl;
+    return std::unique_ptr<KDNode<PointType, SplitDimension> > (new KDNode<PointType, SplitDimension>(pointIndex));
+  } else if (points[pointIndex].getDimension(SplitDimension) <
+	     points[node->treeIndex].getDimension(SplitDimension)){
+    std::cout << "adding left" << std::endl;
+    node->leftChild = insertPointSubtree<nextDimension>(node->leftChild, pointIndex);
+    std::cout << "added left " << std::endl;
+  } else {
+    std::cout << "adding right " << std::endl;
+    node->rightChild = insertPointSubtree<nextDimension>(node->rightChild, pointIndex);
+    std::cout << "added right" << std::endl;
+  }
+  return std::move(node);
+  
+}
 #endif //_BJ_KD_TREE_H

@@ -59,4 +59,10 @@ int main(int argc, char** argv){
     tree.deletePoint(i);
     tree.dumpTreeInorder();
   }
+
+  std::cout << "inserting 2 points" << std::endl;
+  tree.insertPoint({1, 4, 5});
+  tree.dumpTreeInorder();
+  tree.insertPoint({3, 8, 6});
+  tree.dumpTreeInorder();
 }
