@@ -30,8 +30,11 @@ template <typename PointType, typename PointArray=std::vector<PointType> >
  
  void buildTree(const PointArray& pointsIn); 
  void dumpTreeInorder();
- std::vector<size_t> getPointsWithinCube(PointType testPoint, double radius);
 
+ template <typename F>
+ void inorderTraversal(F func);
+
+ std::vector<size_t> getPointsWithinCube(PointType testPoint, double radius);
  size_t findMin(int dimension);
 
  void dumpNode(size_t i){
@@ -39,6 +42,8 @@ template <typename PointType, typename PointArray=std::vector<PointType> >
  }
  
  void deletePoint(size_t nodeIndex);
+ PointType getPoint(size_t nodeIndex){return points[nodeIndex];}
+
 
  //END PUBLIC API 
  private: 
@@ -49,6 +54,9 @@ template <typename PointType, typename PointArray=std::vector<PointType> >
  template <int SplitDimension>
  std::unique_ptr<KDNode<PointType, SplitDimension> > buildSubtree( std::vector<size_t>::iterator begin,
 								   std::vector<size_t>::iterator end);
+
+
+
 
  template<int SplitDimension>
  void dumpSubtree(std::unique_ptr<KDNode<PointType, SplitDimension> >& node);
@@ -77,6 +85,9 @@ template <typename PointType, typename PointArray=std::vector<PointType> >
  deleteFromSubtree(size_t nodeIndex, 
 		   std::unique_ptr<KDNode<PointType, SplitDimension> >& node);
  
+ template<int SplitDimension, typename F>
+ void inorderTraversalSubtree(F func,
+			      std::unique_ptr<KDNode<PointType, SplitDimension> >& node);
 
 };
 
@@ -294,5 +305,30 @@ template<typename PointType, typename PointArray>
   return std::move(node);
   
 }
+
+template<typename PointType, typename PointArray>
+template <typename F>
+  void KDTree<PointType, PointArray>::inorderTraversal(F func){
+
+  inorderTraversalSubtree<0, F>(func, root);
+  
+}
+
+template<typename PointType, typename PointArray>
+  template<int SplitDimension, typename F>
+  void KDTree<PointType, PointArray>::inorderTraversalSubtree(F func,
+							      std::unique_ptr<KDNode<PointType, 
+							      SplitDimension> >& node){
+  auto constexpr nextDimension = (SplitDimension +1)%PointType::dimension;
+  if(node->leftChild){
+    inorderTraversalSubtree<nextDimension, F>(func, node->leftChild);
+  }
+  func(points[node->treeIndex]);
+  if(node->rightChild){
+    inorderTraversalSubtree<nextDimension, F>(func, node->rightChild);
+  }
+  
+}
+
 
 #endif //_BJ_KD_TREE_H
